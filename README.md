@@ -30,11 +30,11 @@ creating it before tests and deleting it after).
   ```xml
 
   <dependency>
-  <groupId>io.github.stasbykov</groupId>
-  <artifactId>junit-data-preparer</artifactId>
-  <!-- See the current version in maven -->
-  <version>1.0.0</version>
-  <scope>test</scope>
+    <groupId>io.github.stasbykov</groupId>
+    <artifactId>junit-data-preparer</artifactId>
+    <!-- See the current version in maven -->
+    <version>1.0.0</version>
+    <scope>test</scope>
   </dependency>
 
   ```
