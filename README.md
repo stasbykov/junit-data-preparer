@@ -208,7 +208,7 @@ import io.github.stasbykov.datapreparer.api.core.FixtureBatchCollection;
 @ClassDataSetup(value = {
         @Template(name = "first_user_template", count = 3),
         @Template(name = "first_order_template", count = 5)},
-        inject = true // value true is default
+        inject = true // value false is default
 )
 public class SomeTestClass {
     @FixtureInject
