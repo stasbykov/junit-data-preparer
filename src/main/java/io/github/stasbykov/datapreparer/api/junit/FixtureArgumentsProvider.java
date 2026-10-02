@@ -9,6 +9,7 @@ import io.github.stasbykov.datapreparer.internal.core.FixtureHandler;
 import io.github.stasbykov.datapreparer.internal.junit.FixturePreparation;
 import io.github.stasbykov.datapreparer.internal.junit.TestDataPreparer;
 import io.github.stasbykov.datapreparer.internal.util.scanner.ClassgraphScanner;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
@@ -43,9 +44,9 @@ public final class FixtureArgumentsProvider implements ArgumentsProvider, Annota
     }
 
     @Override
-    public Stream<? extends Arguments> provideArguments(
-            ParameterDeclarations parameters,
-            ExtensionContext context) {
+    public @NonNull Stream<? extends Arguments> provideArguments(
+            @NonNull ParameterDeclarations parameters,
+            @NonNull ExtensionContext context) {
         if (templates == null || templates.length == 0) {
             throw new IllegalArgumentException("@FixtureSource must declare at least one @Template.");
         }
@@ -67,7 +68,7 @@ public final class FixtureArgumentsProvider implements ArgumentsProvider, Annota
             combinations = combinations.flatMap(prefix -> axis.stream()
                     .map(value -> append(prefix, value)));
         }
-        return combinations.map(values -> Arguments.of(values));
+        return combinations.map(Arguments::of);
     }
 
     private Object[] append(Object[] prefix, Object value) {

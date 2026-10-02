@@ -4,7 +4,6 @@ import io.github.stasbykov.datapreparer.api.annotation.FixtureReference;
 import io.github.stasbykov.datapreparer.api.annotation.Template;
 import io.github.stasbykov.datapreparer.api.core.Fixture;
 import io.github.stasbykov.datapreparer.api.core.FixtureBatch;
-import io.github.stasbykov.datapreparer.api.core.FixtureLoader;
 import io.github.stasbykov.datapreparer.api.core.FixtureTemplate;
 import io.github.stasbykov.datapreparer.internal.core.FixtureHandler;
 import org.jetbrains.annotations.NotNull;
