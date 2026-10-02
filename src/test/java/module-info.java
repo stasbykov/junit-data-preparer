@@ -4,6 +4,7 @@ module io.github.stasbykov.datapreparer.test {
 
     requires org.junit.jupiter.api;
     requires org.junit.jupiter.engine;
+    requires org.junit.jupiter.params;
     requires org.mockito;
     requires org.mockito.junit.jupiter;
     requires org.junit.platform.testkit;

@@ -1,5 +1,6 @@
 module io.github.stasbykov.datapreparer {
     requires org.junit.jupiter.api;
+    requires org.junit.jupiter.params;
     requires org.slf4j;
     requires org.jetbrains.annotations;
     requires io.github.classgraph;

@@ -15,6 +15,8 @@ creating it before tests and deleting it after).
 - FixtureLoader and FixtureDeleter interfaces that are integrated into the JUnit5 framework lifecycle and are
   automatically executed before and after tests
 - Templates and template registries for creating dynamic test data
+- Recursive fixture references with circular-reference detection
+- Cartesian fixture argument sources for JUnit parameterized tests
 
 ## Requirements
 
@@ -33,7 +35,7 @@ creating it before tests and deleting it after).
     <groupId>io.github.stasbykov</groupId>
     <artifactId>junit-data-preparer</artifactId>
     <!-- See the current version in maven -->
-    <version>1.0.0</version>
+    <version>2.0.0</version>
     <scope>test</scope>
   </dependency>
 
@@ -44,7 +46,7 @@ creating it before tests and deleting it after).
   ```groovy
 
   // See the current version in maven
-  testImplementation 'io.github.stasbykov:junit-data-preparer:1.0.0'
+  testImplementation 'io.github.stasbykov:junit-data-preparer:2.0.0'
   
   ```
 
@@ -58,14 +60,25 @@ creating it before tests and deleting it after).
 ```java
 
 import java.util.UUID;
+import io.github.stasbykov.datapreparer.api.annotation.FixtureReference;
 
 public record UserFixture(String name, String age) implements Fixture {
 }
 
-public record OrderFixture(UUID id, Integer sum) implements Fixture {
+public record OrderFixture(
+        UUID id,
+        Integer sum,
+        @FixtureReference("first_user_template") UserFixture user
+) implements Fixture {
 }
 
 ```
+
+A fixture can reference another named fixture template. References are loaded recursively, from the deepest
+dependency to the root fixture. Records are supported and are rebuilt with the loaded referenced values.
+The referenced template produces one fixture for every containing fixture. Circular reference chains are rejected
+with an exception that contains the complete template path. Fixtures are deleted in reverse load order: containing
+fixtures first, then their dependencies.
 
 ### Create a loader and deleter for this test data model
 
@@ -179,13 +192,13 @@ public class OrderFixtureRegistry implements FixtureRegistry<OrderFixture> {
                         "first_order_template",
                         new OrderLoader(),
                         new OrderDeleter(),
-                        () -> new OrderFixture(UUID.randomUUID(), 100)
+                        () -> new OrderFixture(UUID.randomUUID(), 100, null)
                 ),
                 new FixtureTemplate<OrderFixture>(
                         "second_order_template",
                         new OrderLoader(),
                         new OrderDeleter(),
-                        () -> new OrderFixture(UUID.randomUUID(), 300)
+                        () -> new OrderFixture(UUID.randomUUID(), 300, null)
                 )
         );
     }
@@ -225,4 +238,31 @@ public class SomeTestClass {
     }
 }
 
+```
+
+### Using fixtures in parameterized tests
+
+`@FixtureSource` supplies one test-method argument from each listed template. If templates produce different sets
+of fixtures, every possible combination is executed (Cartesian product).
+
+Fixtures are loaded once before the parameterized invocations and are shared by all generated argument combinations.
+After every invocation of the parameterized method has finished, each loaded fixture batch is deleted once. Deletion
+also runs if an invocation fails and uses reverse load order: containing fixtures are deleted before their referenced
+dependencies. Fixtures are not deleted between individual invocations.
+
+```java
+import io.github.stasbykov.datapreparer.api.annotation.FixtureSource;
+import org.junit.jupiter.params.ParameterizedTest;
+
+class OrderParameterizedTest {
+
+    @ParameterizedTest
+    @FixtureSource({
+            @Template(name = "first_user_template", count = 2),
+            @Template(name = "first_order_template", count = 3)
+    })
+    void testEveryUserWithEveryOrder(UserFixture user, OrderFixture order) {
+        // Executed 2 x 3 = 6 times.
+    }
+}
 ```
