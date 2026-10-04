@@ -10,5 +10,10 @@ import java.util.List;
  * @since 1.0.0
  */
 public interface FixtureDeleter<T extends Fixture> {
+    /**
+     * Deletes the supplied fixtures.
+     *
+     * @param fixture fixtures to delete
+     */
     void delete(List<T> fixture);
 }

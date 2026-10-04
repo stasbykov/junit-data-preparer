@@ -10,5 +10,11 @@ import java.util.List;
  * @since 1.0.0
  */
 public interface FixtureLoader<T extends Fixture> {
+    /**
+     * Loads the supplied fixture definitions and returns their prepared representations.
+     *
+     * @param fixture fixture definitions to load
+     * @return prepared fixtures
+     */
     List<T> load(List<T> fixture);
 }

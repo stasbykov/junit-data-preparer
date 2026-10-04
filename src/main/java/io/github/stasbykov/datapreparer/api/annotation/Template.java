@@ -22,6 +22,17 @@ import java.lang.annotation.*;
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Template {
+    /**
+     * Returns the logical name of the fixture template registered by the application.
+     *
+     * @return template name
+     */
     String name();
+
+    /**
+     * Returns the number of fixture instances to prepare.
+     *
+     * @return requested fixture count
+     */
     int count();
 }

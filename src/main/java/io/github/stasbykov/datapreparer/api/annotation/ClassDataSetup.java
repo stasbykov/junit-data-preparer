@@ -49,6 +49,17 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @ExtendWith(ClassDataPrepareExtension.class)
 public @interface ClassDataSetup {
+    /**
+     * Specifies the fixture templates to prepare for the test class.
+     *
+     * @return fixture templates in preparation order
+     */
     Template[] value();
+
+    /**
+     * Specifies whether the prepared fixtures should be injected into a field marked with {@link FixtureInject}.
+     *
+     * @return {@code true} when field injection is enabled
+     */
     boolean inject() default false;
 }

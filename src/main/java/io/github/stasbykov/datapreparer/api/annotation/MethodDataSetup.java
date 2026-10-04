@@ -44,5 +44,10 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @ExtendWith(MethodDataPrepareExtension.class)
 public @interface MethodDataSetup {
-     Template[] value();
+    /**
+     * Specifies the fixture templates to prepare for the annotated method parameter.
+     *
+     * @return fixture templates in preparation order
+     */
+    Template[] value();
 }

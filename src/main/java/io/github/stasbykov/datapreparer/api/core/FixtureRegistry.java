@@ -10,5 +10,10 @@ import java.util.List;
  * @since 1.0.0
  */
 public interface FixtureRegistry<T extends Fixture> {
+    /**
+     * Returns the fixture templates exposed by this registry.
+     *
+     * @return registered fixture templates
+     */
     List<FixtureTemplate<T>> getTemplates();
 }

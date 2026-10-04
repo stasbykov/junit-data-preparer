@@ -1,3 +1,8 @@
+/**
+ * Provides fixture preparation APIs and JUnit Jupiter extensions for test data lifecycle management.
+ *
+ * @since 1.0.0
+ */
 module io.github.stasbykov.datapreparer {
     requires org.junit.jupiter.api;
     requires org.junit.jupiter.params;
