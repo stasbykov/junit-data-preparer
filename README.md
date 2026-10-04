@@ -1,10 +1,11 @@
 # JUnit Data Preparer
 
-[![JUnit5](https://img.shields.io/badge/JUnit5-26A65B?logo=junit5&logoColor=white)](https://junit.org/junit5/)
+[![CI](https://github.com/stasbykov/junit-data-preparer/actions/workflows/ci.yml/badge.svg)](https://github.com/stasbykov/junit-data-preparer/actions/workflows/ci.yml)
+[![JUnit 6](https://img.shields.io/badge/JUnit_6-26A65B?logo=junit5&logoColor=white)](https://junit.org/)
 [![Java](https://img.shields.io/badge/Java-ED8B00?logo=java&logoColor=white)](https://openjdk.org/)
 [![Maven](https://img.shields.io/badge/Maven-C71A36?logo=apache-maven&logoColor=white)](https://maven.apache.org/)
 
-A JUnit5 library extension for preparing data before tests. The library provides interfaces for working with test data (
+A JUnit library extension for preparing data before tests. The library provides interfaces for working with test data (
 creating it before tests and deleting it after).
 
 ## Features
@@ -20,8 +21,10 @@ creating it before tests and deleting it after).
 
 ## Requirements
 
-- Java 17 or higher
-- JUnit 5.0.x or higher
+- Java 21 or higher
+- JUnit 6.1 or higher
+
+JUnit 5 is not part of the supported compatibility matrix for version 2.x.
 
 ## Usage
 
