@@ -243,6 +243,15 @@ public class SomeTestClass {
 
 ```
 
+Class-level fixtures are loaded before JUnit invokes `@BeforeAll`, shared by every test in the class, and deleted
+after the class lifecycle completes. With `inject = true`, exactly one `FixtureBatchCollection` field must be marked
+with `@FixtureInject`; that field may also be declared in a superclass.
+
+Method-level fixtures are scoped to the individual test invocation. A test method may declare multiple
+`@MethodDataSetup` parameters, each with an independent collection of templates. Every requested template name must
+exist in a fixture registry. During cleanup, deletion is attempted for every loaded batch in reverse order even if a
+deleter fails; subsequent failures are attached to the first exception as suppressed exceptions.
+
 ### Using fixtures in parameterized tests
 
 `@FixtureSource` supplies one test-method argument from each listed template. If templates produce different sets

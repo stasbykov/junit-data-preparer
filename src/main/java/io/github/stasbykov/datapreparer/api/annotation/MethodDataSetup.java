@@ -15,7 +15,8 @@ import java.lang.annotation.*;
  * </p>
  * <p>
  * The annotation triggers the {@link MethodDataPrepareExtension} to process the provided templates
- * and prepare the necessary data context for the test.
+ * and prepare the necessary data context for the test. Multiple annotated parameters in the same method are
+ * prepared and cleaned up independently.
  * </p>
  *
  * <h2>Usage Example:</h2>

@@ -127,6 +127,10 @@
                 <version>3.16.0</version>
                 <configuration>
                     <release>${java.version}</release>
+                    <compilerArgs>
+                        <!-- The qualified exports target the test module, which is compiled later. -->
+                        <arg>-Xlint:-module</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
 
