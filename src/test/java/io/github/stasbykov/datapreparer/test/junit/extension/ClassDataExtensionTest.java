@@ -4,7 +4,9 @@ import io.github.stasbykov.datapreparer.api.annotation.ClassDataSetup;
 import io.github.stasbykov.datapreparer.api.annotation.FixtureInject;
 import io.github.stasbykov.datapreparer.api.annotation.Template;
 import io.github.stasbykov.datapreparer.api.core.FixtureBatchCollection;
+import io.github.stasbykov.datapreparer.test.junit.extension.fixture.RecursiveFixtureRegistry;
 import io.github.stasbykov.datapreparer.test.junit.extension.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.platform.testkit.engine.EngineTestKit;
@@ -15,8 +17,11 @@ import java.util.stream.IntStream;
 
 import static io.github.stasbykov.datapreparer.test.junit.extension.BaseTest.*;
 import static io.github.stasbykov.datapreparer.test.junit.extension.ClassDataExtensionTest.TEN_FIXTURES;
+import static io.github.stasbykov.datapreparer.test.junit.extension.fixture.RecursiveFixtureRegistry.AXIS_A_TEMPLATE;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
 
 public class ClassDataExtensionTest extends BaseTest {
@@ -35,24 +40,21 @@ public class ClassDataExtensionTest extends BaseTest {
 
     @Test
     void shouldFailureExecutableExtensionForZeroCount() {
-        failureExecutableWithException(ZeroCountClassDataSpec.class,
-                "someTest",
+        failureBeforeTestExecutionWithException(ZeroCountClassDataSpec.class,
                 IllegalArgumentException.class,
                 "The count parameter of the @Template annotation cannot be 0 or negative.");
     }
 
     @Test
     void shouldFailureExecutableExtensionForNegativeCount() {
-        failureExecutableWithException(NegativeCountClassDataSpec.class,
-                "someTest",
+        failureBeforeTestExecutionWithException(NegativeCountClassDataSpec.class,
                 IllegalArgumentException.class,
                 "The count parameter of the @Template annotation cannot be 0 or negative.");
     }
 
     @Test
     void shouldFailureExecutableExtensionForEmptyTemplateName() {
-        failureExecutableWithException(EmptyNameTemplateClassDataSpec.class,
-                "someTest",
+        failureBeforeTestExecutionWithException(EmptyNameTemplateClassDataSpec.class,
                 IllegalArgumentException.class,
                 "The name parameter of the @Template annotation cannot be null or empty.");
     }
@@ -62,7 +64,46 @@ public class ClassDataExtensionTest extends BaseTest {
         failureExecutableWithException(IncorrectInjectFieldTypeClassDataSpec.class,
                 "someTest",
                 IllegalArgumentException.class,
-                "Fixture saving failed because a field annotated with @FixtureInject and of type FixtureBatchCollection was not found. Check the annotation and field type.");
+                "Fixture saving failed because the field annotated with @FixtureInject must be of type FixtureBatchCollection.");
+    }
+
+    @Test
+    void shouldRejectUnknownTemplateBeforeTestExecution() {
+        RecursiveFixtureRegistry.clearEvents();
+
+        failureBeforeTestExecutionWithException(UnknownTemplateClassDataSpec.class,
+                IllegalArgumentException.class,
+                "Fixture template was not found: unknown_template");
+
+        assertEquals(
+                List.of("create:a0", "load:" + AXIS_A_TEMPLATE, "delete:" + AXIS_A_TEMPLATE),
+                RecursiveFixtureRegistry.events());
+    }
+
+    @Test
+    void shouldPrepareFixturesBeforeStaticBeforeAll() {
+        RecursiveFixtureRegistry.clearEvents();
+        BeforeAllClassDataSpec.fixturesWereLoaded = false;
+
+        EngineTestKit.engine("junit-jupiter")
+                .selectors(selectClass(BeforeAllClassDataSpec.class))
+                .execute()
+                .testEvents()
+                .assertStatistics(stats -> stats.started(1).succeeded(1));
+
+        assertTrue(BeforeAllClassDataSpec.fixturesWereLoaded);
+        assertEquals(
+                List.of("create:a0", "load:" + AXIS_A_TEMPLATE, "delete:" + AXIS_A_TEMPLATE),
+                RecursiveFixtureRegistry.events());
+    }
+
+    @Test
+    void shouldInjectFixturesIntoInheritedField() {
+        EngineTestKit.engine("junit-jupiter")
+                .selectors(selectClass(InheritedInjectionClassDataSpec.class))
+                .execute()
+                .testEvents()
+                .assertStatistics(stats -> stats.started(1).succeeded(1));
     }
 }
 
@@ -128,6 +169,44 @@ class IncorrectInjectFieldTypeClassDataSpec {
     String loadedFixtures;
     @Test
     void someTest() {
+    }
+}
+
+@ClassDataSetup({
+        @Template(name = AXIS_A_TEMPLATE, count = 1),
+        @Template(name = "unknown_template", count = 1)})
+class UnknownTemplateClassDataSpec {
+    @Test
+    void someTest() {
+    }
+}
+
+@ClassDataSetup(@Template(name = AXIS_A_TEMPLATE, count = 1))
+class BeforeAllClassDataSpec {
+    static boolean fixturesWereLoaded;
+
+    @BeforeAll
+    static void beforeAll() {
+        fixturesWereLoaded = RecursiveFixtureRegistry.events()
+                .contains("load:" + AXIS_A_TEMPLATE);
+    }
+
+    @Test
+    void someTest() {
+    }
+}
+
+class ClassDataInjectionBase {
+    @FixtureInject
+    FixtureBatchCollection loadedFixtures;
+}
+
+@ClassDataSetup(value = @Template(name = FIRST_TEMPLATE_NAME, count = 1), inject = true)
+class InheritedInjectionClassDataSpec extends ClassDataInjectionBase {
+    @Test
+    void someTest() {
+        assertNotNull(loadedFixtures);
+        assertEquals(1, loadedFixtures.get(FIRST_TEMPLATE_NAME, TestFixture.class).size());
     }
 }
 

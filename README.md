@@ -38,7 +38,7 @@ JUnit 5 is not part of the supported compatibility matrix for version 2.x.
     <groupId>io.github.stasbykov</groupId>
     <artifactId>junit-data-preparer</artifactId>
     <!-- See the current version in maven -->
-    <version>2.0.0</version>
+    <version>2.0.1</version>
     <scope>test</scope>
   </dependency>
 
@@ -49,7 +49,7 @@ JUnit 5 is not part of the supported compatibility matrix for version 2.x.
   ```groovy
 
   // See the current version in maven
-  testImplementation 'io.github.stasbykov:junit-data-preparer:2.0.0'
+  testImplementation 'io.github.stasbykov:junit-data-preparer:2.0.1'
   
   ```
 
@@ -242,6 +242,15 @@ public class SomeTestClass {
 }
 
 ```
+
+Class-level fixtures are loaded before JUnit invokes `@BeforeAll`, shared by every test in the class, and deleted
+after the class lifecycle completes. With `inject = true`, exactly one `FixtureBatchCollection` field must be marked
+with `@FixtureInject`; that field may also be declared in a superclass.
+
+Method-level fixtures are scoped to the individual test invocation. A test method may declare multiple
+`@MethodDataSetup` parameters, each with an independent collection of templates. Every requested template name must
+exist in a fixture registry. During cleanup, deletion is attempted for every loaded batch in reverse order even if a
+deleter fails; subsequent failures are attached to the first exception as suppressed exceptions.
 
 ### Using fixtures in parameterized tests
 

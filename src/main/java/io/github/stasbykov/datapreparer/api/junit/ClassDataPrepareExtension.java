@@ -5,15 +5,16 @@ import io.github.stasbykov.datapreparer.api.annotation.FixtureInject;
 import io.github.stasbykov.datapreparer.api.core.FixtureBatchCollection;
 import io.github.stasbykov.datapreparer.internal.junit.PrepareExtensionManager;
 import io.github.stasbykov.datapreparer.internal.util.scanner.ClassgraphScanner;
+import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.TestInstancePostProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Optional;
+import java.util.List;
 
 import static java.util.Objects.requireNonNull;
 import static io.github.stasbykov.datapreparer.internal.util.junit.ContextUtils.getRequiredAnnotation;
@@ -23,7 +24,7 @@ import static io.github.stasbykov.datapreparer.internal.util.junit.ContextUtils.
  *
  * @since 1.0.0
  */
-public final class ClassDataPrepareExtension implements TestInstancePostProcessor {
+public final class ClassDataPrepareExtension implements BeforeAllCallback, TestInstancePostProcessor {
 
     private final PrepareExtensionManager prepareExtensionManager;
     private final Logger logger;
@@ -35,6 +36,17 @@ public final class ClassDataPrepareExtension implements TestInstancePostProcesso
         this(new PrepareExtensionManager(new ClassgraphScanner(),
                 ExtensionContext.Namespace.create(ClassDataPrepareExtension.class)),
                 LoggerFactory.getLogger(ClassDataPrepareExtension.class));
+    }
+
+    /**
+     * Loads class fixtures before {@code @BeforeAll} methods are invoked.
+     *
+     * @param context JUnit extension context
+     */
+    @Override
+    public void beforeAll(ExtensionContext context) {
+        logger.info("Starting fixture preparation before all tests in the class.");
+        prepareExtensionManager.computeValueOnce(context);
     }
 
     /**
@@ -57,13 +69,11 @@ public final class ClassDataPrepareExtension implements TestInstancePostProcesso
      */
     @Override
     public void postProcessTestInstance(Object testInstance, ExtensionContext context) throws IllegalAccessException {
-        logger.info("Starting of the method of preparing fixtures before testing.");
-        FixtureBatchCollection fixtureBatches = prepareExtensionManager.computeValueOnce(context);
-
         if (!getRequiredAnnotation(context, ClassDataSetup.class).inject()) {
             logger.info("Saving fixtures to the field is disabled. Skipping step.");
             return;
         }
+        FixtureBatchCollection fixtureBatches = prepareExtensionManager.computeValueOnce(context);
         logger.info("Saving fixtures to a field annotated with @FixtureInject.");
         injectLoadedFixtures(testInstance, fixtureBatches);
     }
@@ -78,22 +88,36 @@ public final class ClassDataPrepareExtension implements TestInstancePostProcesso
      */
     private void injectLoadedFixtures(Object testInstance, FixtureBatchCollection fixtureBatches) throws IllegalAccessException {
         requireNonNull(fixtureBatches, "Saving fixtures could not be completed - no fixtures were found.");
-        Field field = findFieldWithAnnotation(testInstance.getClass(), FixtureInject.class)
-                .orElseThrow(() -> new IllegalArgumentException("Fixture saving failed because a field annotated with @FixtureInject and of type FixtureBatchCollection was not found. Check the annotation and field type."));
+        Field field = findInjectionField(testInstance.getClass());
         field.setAccessible(true);
         field.set(testInstance, fixtureBatches);
     }
 
     /**
-     * Finds the first field in a class that matches the given type and the presence of an annotation.
+     * Finds a single field annotated with {@link FixtureInject} in the complete class hierarchy.
      *
      * @param clazz the class to search for the field
-     * @param annotationClass the class of the annotation the field should contain
-     * @return Optional field that satisfies the conditions
+     * @return field that satisfies the injection contract
      */
-    private Optional<Field> findFieldWithAnnotation(Class<?> clazz, Class<? extends Annotation> annotationClass) {
-        return Arrays.stream(clazz.getDeclaredFields())
-                .filter(field -> field.getType() == FixtureBatchCollection.class && field.isAnnotationPresent(annotationClass))
-                .findFirst();
+    private Field findInjectionField(Class<?> clazz) {
+        List<Field> annotatedFields = new ArrayList<>();
+        for (Class<?> current = clazz; current != null && current != Object.class; current = current.getSuperclass()) {
+            Arrays.stream(current.getDeclaredFields())
+                    .filter(field -> field.isAnnotationPresent(FixtureInject.class))
+                    .forEach(annotatedFields::add);
+        }
+
+        if (annotatedFields.size() != 1) {
+            throw new IllegalArgumentException(
+                    "Fixture saving requires exactly one field annotated with @FixtureInject, but found: "
+                            + annotatedFields.size());
+        }
+
+        Field field = annotatedFields.get(0);
+        if (field.getType() != FixtureBatchCollection.class) {
+            throw new IllegalArgumentException("Fixture saving failed because the field annotated with "
+                    + "@FixtureInject must be of type FixtureBatchCollection.");
+        }
+        return field;
     }
 }

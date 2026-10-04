@@ -21,7 +21,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.IntStream;
 
 import static java.util.Objects.requireNonNull;
@@ -56,7 +55,6 @@ public class TestDataPreparer {
         try {
             Arrays.stream(templates)
                     .map(template -> loadTemplate(template, new ArrayDeque<>(), batches))
-                    .flatMap(Optional::stream)
                     .forEach(roots::add);
             return new FixturePreparation(batches, roots);
         } catch (RuntimeException | Error exception) {
@@ -73,16 +71,30 @@ public class TestDataPreparer {
         requireNonNull(fixtures, "Fixture batches cannot be null");
         List<FixtureBatch<? extends Fixture>> reversed = new ArrayList<>(fixtures);
         Collections.reverse(reversed);
-        reversed.forEach(TestDataPreparer::deleteBatch);
+        Throwable firstFailure = null;
+        for (FixtureBatch<? extends Fixture> batch : reversed) {
+            try {
+                deleteBatch(batch);
+            } catch (RuntimeException | Error exception) {
+                if (firstFailure == null) {
+                    firstFailure = exception;
+                } else {
+                    firstFailure.addSuppressed(exception);
+                }
+            }
+        }
+        rethrowDeletionFailure(firstFailure);
     }
 
-    private Optional<FixtureBatch<? extends Fixture>> loadTemplate(
+    private FixtureBatch<? extends Fixture> loadTemplate(
             Template template,
             Deque<String> path,
             List<FixtureBatch<? extends Fixture>> batches) {
         validateTemplate(template);
-        return fixtureHandler.getTemplate(template.name())
-                .map(fixtureTemplate -> loadTemplateGraph(fixtureTemplate, template.count(), path, batches));
+        FixtureTemplate<? extends Fixture> fixtureTemplate = fixtureHandler.getTemplate(template.name())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Fixture template was not found: " + template.name()));
+        return loadTemplateGraph(fixtureTemplate, template.count(), path, batches);
     }
 
     private FixtureBatch<? extends Fixture> loadReferencedTemplate(
@@ -269,6 +281,15 @@ public class TestDataPreparer {
         FixtureTemplate<T> template = batch.template();
         validateFixtureTemplate(template, template.deleter(), "FixtureDeleter");
         template.deleter().delete(batch.fixtures());
+    }
+
+    private static void rethrowDeletionFailure(Throwable failure) {
+        if (failure instanceof RuntimeException runtimeException) {
+            throw runtimeException;
+        }
+        if (failure instanceof Error error) {
+            throw error;
+        }
     }
 
     private void validateTemplate(Template[] templates) {

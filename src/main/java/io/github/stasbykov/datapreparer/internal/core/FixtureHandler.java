@@ -37,7 +37,7 @@ public class FixtureHandler {
      */
     public FixtureHandler(@NotNull ClassScanner scanner) {
         // Loading fixture registers
-        @SuppressWarnings("unchecked ")
+        @SuppressWarnings("unchecked")
         Class<FixtureRegistry<? extends Fixture>> fixtureRegistryClass = (Class<FixtureRegistry<? extends Fixture>>) (Class<?>) FixtureRegistry.class;
         List<FixtureRegistry<? extends Fixture>> registries = scanner.findAndInstantiate(fixtureRegistryClass, getPackageName().orElse(""));
         // Adding fixture templates from registries to the list

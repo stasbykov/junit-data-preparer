@@ -11,11 +11,12 @@ import java.lang.annotation.*;
  *
  * <p>When this annotation is applied to a test class, it activates the data preparation mechanism
  * via {@link ClassDataPrepareExtension}, which processes the specified templates and prepares
- * fixture data before test execution.</p>
+ * fixture data before {@code @BeforeAll} and deletes it after the class lifecycle completes.</p>
  *
  * <p>The annotated class can define one or more {@link Template} configurations that describe
  * how test data should be generated or loaded. Additionally, the {@code inject} flag controls
- * whether the prepared data should be automatically injected into the test instance.</p>
+ * whether the prepared data should be automatically injected into the test instance. The field marked with
+ * {@link FixtureInject} may be declared in the annotated class or one of its superclasses.</p>
  *
  * <h2>Usage Example:</h2>
  * <pre>{@code
@@ -48,6 +49,17 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @ExtendWith(ClassDataPrepareExtension.class)
 public @interface ClassDataSetup {
+    /**
+     * Specifies the fixture templates to prepare for the test class.
+     *
+     * @return fixture templates in preparation order
+     */
     Template[] value();
+
+    /**
+     * Specifies whether the prepared fixtures should be injected into a field marked with {@link FixtureInject}.
+     *
+     * @return {@code true} when field injection is enabled
+     */
     boolean inject() default false;
 }

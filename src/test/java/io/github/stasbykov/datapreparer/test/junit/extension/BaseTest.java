@@ -71,4 +71,24 @@ public class BaseTest {
                         ));
 
     }
+
+    void failureBeforeTestExecutionWithException(
+            Class<?> testClass,
+            Class<? extends Exception> exceptionClass,
+            String errorMessage) {
+        EngineTestKit
+                .engine("junit-jupiter")
+                .selectors(selectClass(testClass))
+                .execute()
+                .containerEvents()
+                .assertEventsMatchLoosely(
+                        event(
+                                container(testClass),
+                                finishedWithFailure(
+                                        new Condition<>(
+                                                throwable -> throwable.getMessage() != null
+                                                        && throwable.getMessage().contains(errorMessage)
+                                                        && exceptionClass.isInstance(throwable),
+                                                "The error message contains: " + errorMessage))));
+    }
 }

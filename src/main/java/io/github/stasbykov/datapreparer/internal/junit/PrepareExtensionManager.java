@@ -9,6 +9,7 @@ import io.github.stasbykov.datapreparer.internal.util.scanner.ClassScanner;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
 
+import java.lang.reflect.Executable;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -26,8 +27,6 @@ import static io.github.stasbykov.datapreparer.internal.util.junit.ContextUtils.
 public final class PrepareExtensionManager {
     private final TestDataPreparer testDataPreparer;
     private final ExtensionContext.Namespace namespace;
-    private final String LOADED_FIXTURES_KEY = "loadedFixtures";
-
     public PrepareExtensionManager(ClassScanner scanner, ExtensionContext.Namespace namespace) {
         requireNonNull(scanner);
         FixtureHandler handler = new FixtureHandler(scanner);
@@ -43,7 +42,8 @@ public final class PrepareExtensionManager {
      */
     public FixtureBatchCollection computeValueOnce(ExtensionContext context) {
         ExtensionContext.Store store = context.getStore(namespace);
-        return store.getOrComputeIfAbsent(LOADED_FIXTURES_KEY, key -> prepareData(context), FixtureBatchCollection.class);
+        Class<?> testClass = context.getRequiredTestClass();
+        return store.computeIfAbsent(testClass, key -> prepareData(context), FixtureBatchCollection.class);
     }
 
     /**
@@ -55,7 +55,13 @@ public final class PrepareExtensionManager {
      */
     public FixtureBatchCollection computeValueOnce(ParameterContext parameterContext, ExtensionContext extensionContext) {
         ExtensionContext.Store store = extensionContext.getStore(namespace);
-        return store.getOrComputeIfAbsent(LOADED_FIXTURES_KEY, key -> prepareData(parameterContext), FixtureBatchCollection.class);
+        FixtureParameterKey parameterKey = new FixtureParameterKey(
+                parameterContext.getDeclaringExecutable(),
+                parameterContext.getIndex());
+        return store.computeIfAbsent(
+                parameterKey,
+                key -> prepareData(parameterContext),
+                FixtureBatchCollection.class);
     }
 
     /**
@@ -110,5 +116,8 @@ public final class PrepareExtensionManager {
      */
     private Optional<Template[]> getTemplates(ExtensionContext extensionContext) {
         return getAnnotation(extensionContext, ClassDataSetup.class).map(ClassDataSetup::value);
+    }
+
+    private record FixtureParameterKey(Executable executable, int parameterIndex) {
     }
 }

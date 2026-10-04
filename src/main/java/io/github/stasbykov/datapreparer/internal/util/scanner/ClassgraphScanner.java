@@ -19,10 +19,18 @@ public class ClassgraphScanner implements ClassScanner {
 
     private final Logger log;
 
+    /**
+     * Creates a scanner that logs through the default scanner logger.
+     */
     public ClassgraphScanner() {
         this.log = LoggerFactory.getLogger(ClassScanner.class);
     }
 
+    /**
+     * Creates a scanner that logs through the supplied logger.
+     *
+     * @param logger logger used for class-instantiation failures
+     */
     public ClassgraphScanner(Logger logger) {
         this.log = logger;
     }

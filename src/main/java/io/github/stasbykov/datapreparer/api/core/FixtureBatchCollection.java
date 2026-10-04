@@ -5,16 +5,28 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+import static java.util.Objects.requireNonNull;
+
 
 /**
  * A record representing a collection of fixture batches used for test data preparation.
  * Provides methods to retrieve specific fixtures by template name and type,
  * and implements {@link AutoCloseable} to allow for cleanup after use.
  *
+ * @param batches loaded fixture batches in dependency-first order
  * @see FixtureBatch
  * @since 1.0.0
  */
 public record FixtureBatchCollection(List<FixtureBatch<? extends Fixture>> batches) implements AutoCloseable {
+
+    /**
+     * Creates an immutable snapshot of the loaded fixture batches.
+     *
+     * @param batches loaded fixture batches
+     */
+    public FixtureBatchCollection {
+        batches = List.copyOf(requireNonNull(batches, "Fixture batches cannot be null"));
+    }
 
     /**
      * Retrieves a list of fixtures that match the given template name and are instances of the specified type.
