@@ -38,7 +38,7 @@ JUnit 5 is not part of the supported compatibility matrix for version 2.x.
     <groupId>io.github.stasbykov</groupId>
     <artifactId>junit-data-preparer</artifactId>
     <!-- See the current version in maven -->
-    <version>2.0.0</version>
+    <version>2.0.1</version>
     <scope>test</scope>
   </dependency>
 
@@ -49,7 +49,7 @@ JUnit 5 is not part of the supported compatibility matrix for version 2.x.
   ```groovy
 
   // See the current version in maven
-  testImplementation 'io.github.stasbykov:junit-data-preparer:2.0.0'
+  testImplementation 'io.github.stasbykov:junit-data-preparer:2.0.1'
   
   ```
 
