@@ -17,7 +17,7 @@ creating it before tests and deleting it after).
   automatically executed before and after tests
 - Templates and template registries for creating dynamic test data
 - Recursive fixture references with circular-reference detection
-- Cartesian fixture argument sources for JUnit parameterized tests
+- Per-fixture and Cartesian argument sources for JUnit parameterized tests
 
 ## Requirements
 
@@ -38,7 +38,7 @@ JUnit 5 is not part of the supported compatibility matrix for version 2.x.
     <groupId>io.github.stasbykov</groupId>
     <artifactId>junit-data-preparer</artifactId>
     <!-- See the current version in maven -->
-    <version>2.0.1</version>
+    <version>2.1.0</version>
     <scope>test</scope>
   </dependency>
 
@@ -49,7 +49,7 @@ JUnit 5 is not part of the supported compatibility matrix for version 2.x.
   ```groovy
 
   // See the current version in maven
-  testImplementation 'io.github.stasbykov:junit-data-preparer:2.0.1'
+  testImplementation 'io.github.stasbykov:junit-data-preparer:2.1.0'
   
   ```
 
@@ -254,27 +254,88 @@ deleter fails; subsequent failures are attached to the first exception as suppre
 
 ### Using fixtures in parameterized tests
 
-`@FixtureSource` supplies one test-method argument from each listed template. If templates produce different sets
-of fixtures, every possible combination is executed (Cartesian product).
+`@FixtureSource` uses `AUTO` mode by default. A test with one indexed parameter and no argument aggregator is invoked
+once for every fixture loaded from the listed templates. A test with multiple indexed parameters or an
+`ArgumentsAccessor`/`@AggregateWith` parameter treats every template as an argument axis and executes the Cartesian
+product. Use `EACH` or `CARTESIAN` to select either behavior explicitly. Standard JUnit argument converters declared
+with `@ConvertWith` are applied after the fixture arguments are created.
 
-Fixtures are loaded once before the parameterized invocations and are shared by all generated argument combinations.
-After every invocation of the parameterized method has finished, each loaded fixture batch is deleted once. Deletion
-also runs if an invocation fails and uses reverse load order: containing fixtures are deleted before their referenced
-dependencies. Fixtures are not deleted between individual invocations.
+All declared fixture batches are prepared before the parameterized invocations. After every invocation of the
+parameterized method has finished, each loaded fixture batch is deleted once. Deletion also runs if an invocation
+fails and uses reverse load order: containing fixtures are deleted before their referenced dependencies. Fixtures
+are not deleted between individual invocations.
+
+The following test is executed twice, once for each fixture. Repeating the same template declaration also creates
+independent batches, while one declaration with `count = 2` creates a single batch containing two fixtures.
 
 ```java
 import io.github.stasbykov.datapreparer.api.annotation.FixtureSource;
 import org.junit.jupiter.params.ParameterizedTest;
 
-class OrderParameterizedTest {
+class UserParameterizedTest {
 
     @ParameterizedTest
     @FixtureSource({
-            @Template(name = "first_user_template", count = 2),
-            @Template(name = "first_order_template", count = 3)
+            @Template(name = "active_user_template", count = 1),
+            @Template(name = "blocked_user_template", count = 1)
     })
+    void testEachUser(UserFixture user) {
+        // Executed twice.
+    }
+}
+```
+
+Cartesian mode is useful when every combination of independent fixture sets must be verified.
+
+```java
+import io.github.stasbykov.datapreparer.api.annotation.FixtureSource;
+import io.github.stasbykov.datapreparer.api.annotation.FixtureSourceMode;
+import org.junit.jupiter.params.ParameterizedTest;
+
+class OrderParameterizedTest {
+
+    @ParameterizedTest
+    @FixtureSource(
+            value = {
+                    @Template(name = "first_user_template", count = 2),
+                    @Template(name = "first_order_template", count = 3)
+            },
+            mode = FixtureSourceMode.CARTESIAN)
     void testEveryUserWithEveryOrder(UserFixture user, OrderFixture order) {
         // Executed 2 x 3 = 6 times.
     }
 }
 ```
+
+#### JUnit argument aggregation and conversion
+
+`@FixtureSource` supports the standard JUnit parameterized-test argument mechanisms:
+
+- `ArgumentsAccessor` provides indexed access to the complete argument set for an invocation;
+- `@AggregateWith` converts the complete argument set into one reusable, strongly typed object;
+- `@ConvertWith` converts one fixture argument to the type declared by the test-method parameter.
+
+For example, the same Cartesian fixture arguments can be consumed directly or aggregated:
+
+```java
+void testWithAccessor(ArgumentsAccessor arguments) {
+    UserFixture user = arguments.get(0, UserFixture.class);
+    OrderFixture order = arguments.get(1, OrderFixture.class);
+}
+
+void testWithAggregator(
+        @AggregateWith(OrderScenarioAggregator.class) OrderScenario scenario) {
+}
+```
+
+A converter can expose only the value needed by a test:
+
+```java
+void testWithConverter(
+        @ConvertWith(UserIdConverter.class) UUID userId) {
+}
+```
+
+In `AUTO` mode, the presence of `ArgumentsAccessor` or `@AggregateWith` selects `CARTESIAN`, because an aggregator
+consumes the complete argument set. `@ConvertWith` remains an indexed parameter, so a single converted parameter
+selects `EACH` in the same way as a regular single parameter.

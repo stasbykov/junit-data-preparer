@@ -11,8 +11,12 @@ import java.lang.annotation.Target;
 
 /**
  * Supplies loaded fixtures to a JUnit parameterized test.
- * Each template forms one argument axis; test invocations are the Cartesian
- * product of all axes in declaration order.
+ * The configured {@link #mode()} determines whether fixtures are supplied one at a time
+ * or as the Cartesian product of template axes.
+ * Supports JUnit argument access and aggregation through
+ * {@link org.junit.jupiter.params.aggregator.ArgumentsAccessor ArgumentsAccessor} and
+ * {@link org.junit.jupiter.params.aggregator.AggregateWith @AggregateWith}, as well as explicit argument
+ * conversion through {@link org.junit.jupiter.params.converter.ConvertWith @ConvertWith}.
  *
  * @since 2.0.0
  */
@@ -23,9 +27,17 @@ import java.lang.annotation.Target;
 public @interface FixtureSource {
 
     /**
-     * Templates forming the argument axes in test-method parameter order.
+     * Templates whose loaded root fixtures are converted into test arguments.
      *
      * @return fixture templates
      */
     Template[] value();
+
+    /**
+     * Determines how the loaded fixtures are converted into test arguments.
+     *
+     * @return fixture argument generation mode
+     * @since 2.1.0
+     */
+    FixtureSourceMode mode() default FixtureSourceMode.AUTO;
 }
