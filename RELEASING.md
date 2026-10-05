@@ -55,4 +55,11 @@ If publishing has not reached Maven Central, fix the infrastructure problem and 
 has already been published, never move the tag or reuse the version: fix the problem and release a new patch version.
 Published Maven Central versions are immutable.
 
-For a local bundle-only check, use `-DskipPublishing=true`. This creates the Central bundle without uploading it.
+For a local release-artifact check, run:
+
+```shell
+./mvnw --batch-mode --no-transfer-progress -Prelease -DskipPublishing=true clean deploy
+```
+
+With the pinned Central Publishing plugin version, this verifies the build, tests, sources, Javadocs, and signatures
+without uploading artifacts. It does not create a local Central bundle.
