@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.ParameterContext;
 import java.lang.reflect.Executable;
 import java.util.Collection;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
@@ -43,7 +44,7 @@ public final class PrepareExtensionManager {
     public FixtureBatchCollection computeValueOnce(ExtensionContext context) {
         ExtensionContext.Store store = context.getStore(namespace);
         Class<?> testClass = context.getRequiredTestClass();
-        return store.computeIfAbsent(testClass, key -> prepareData(context), FixtureBatchCollection.class);
+        return getOrComputeFixtureCollection(store, testClass, key -> prepareData(context));
     }
 
     /**
@@ -58,10 +59,21 @@ public final class PrepareExtensionManager {
         FixtureParameterKey parameterKey = new FixtureParameterKey(
                 parameterContext.getDeclaringExecutable(),
                 parameterContext.getIndex());
-        return store.computeIfAbsent(
+        return getOrComputeFixtureCollection(
+                store,
                 parameterKey,
-                key -> prepareData(parameterContext),
-                FixtureBatchCollection.class);
+                key -> prepareData(parameterContext));
+    }
+
+    /**
+     * Uses the store method shared by JUnit 5.14 and JUnit 6 to preserve binary compatibility.
+     */
+    @SuppressWarnings("deprecation")
+    private <K> FixtureBatchCollection getOrComputeFixtureCollection(
+            ExtensionContext.Store store,
+            K key,
+            Function<K, FixtureBatchCollection> factory) {
+        return store.getOrComputeIfAbsent(key, factory, FixtureBatchCollection.class);
     }
 
     /**
