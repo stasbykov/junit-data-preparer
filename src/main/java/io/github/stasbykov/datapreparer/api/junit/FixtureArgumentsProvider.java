@@ -10,7 +10,6 @@ import io.github.stasbykov.datapreparer.internal.core.FixtureHandler;
 import io.github.stasbykov.datapreparer.internal.junit.FixturePreparation;
 import io.github.stasbykov.datapreparer.internal.junit.TestDataPreparer;
 import io.github.stasbykov.datapreparer.internal.util.scanner.ClassgraphScanner;
-import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.aggregator.AggregateWith;
 import org.junit.jupiter.params.aggregator.ArgumentsAccessor;
@@ -56,9 +55,9 @@ public final class FixtureArgumentsProvider implements ArgumentsProvider, Annota
     }
 
     @Override
-    public @NonNull Stream<? extends Arguments> provideArguments(
-            @NonNull ParameterDeclarations parameters,
-            @NonNull ExtensionContext context) {
+    public Stream<? extends Arguments> provideArguments(
+            ParameterDeclarations parameters,
+            ExtensionContext context) {
         if (templates == null || templates.length == 0) {
             throw new IllegalArgumentException("@FixtureSource must declare at least one @Template.");
         }

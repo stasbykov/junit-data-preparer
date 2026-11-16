@@ -1,7 +1,7 @@
 # JUnit Data Preparer
 
 [![CI](https://github.com/stasbykov/junit-data-preparer/actions/workflows/ci.yml/badge.svg)](https://github.com/stasbykov/junit-data-preparer/actions/workflows/ci.yml)
-[![JUnit 6](https://img.shields.io/badge/JUnit_6-26A65B?logo=junit5&logoColor=white)](https://junit.org/)
+[![JUnit 5.14+ / 6](https://img.shields.io/badge/JUnit-5.14%2B%20%7C%206-26A65B?logo=junit5&logoColor=white)](https://junit.org/)
 [![Java](https://img.shields.io/badge/Java-ED8B00?logo=java&logoColor=white)](https://openjdk.org/)
 [![Maven](https://img.shields.io/badge/Maven-C71A36?logo=apache-maven&logoColor=white)](https://maven.apache.org/)
 
@@ -22,9 +22,7 @@ creating it before tests and deleting it after).
 ## Requirements
 
 - Java 21 or higher
-- JUnit 6.1 or higher
-
-JUnit 5 is not part of the supported compatibility matrix for version 2.x.
+- JUnit 5.14.3 or higher, including JUnit 6
 
 ## Usage
 
@@ -38,7 +36,7 @@ JUnit 5 is not part of the supported compatibility matrix for version 2.x.
     <groupId>io.github.stasbykov</groupId>
     <artifactId>junit-data-preparer</artifactId>
     <!-- See the current version in maven -->
-    <version>2.1.0</version>
+    <version>2.1.1</version>
     <scope>test</scope>
   </dependency>
 
@@ -49,7 +47,7 @@ JUnit 5 is not part of the supported compatibility matrix for version 2.x.
   ```groovy
 
   // See the current version in maven
-  testImplementation 'io.github.stasbykov:junit-data-preparer:2.1.0'
+  testImplementation 'io.github.stasbykov:junit-data-preparer:2.1.1'
   
   ```
 
